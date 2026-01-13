@@ -18,9 +18,9 @@
  * 1    => promise that will be fulfilled
  */
 function getPromise(number) {
-  return new Promise((res, rej) => {
-    if (number < 0) rej();
-    res();
+  return new Promise((resolve, reject) => {
+    if (number < 0) reject();
+    resolve();
   });
 }
 
@@ -57,14 +57,14 @@ function getPromiseResult(source) {
  * [Promise.reject(1), Promise.reject(2), Promise.reject(3)]    => Promise rejected
  */
 function getFirstResolvedPromiseResult(promises) {
-  let countReject = 0;
-  return new Promise((response, reject) => {
+  let rejectCount = 0;
+  return new Promise((resolve, reject) => {
     promises.map((s) =>
       s.then(
-        (res) => response(res),
+        (res) => resolve(res),
         () => {
-          countReject += 1;
-          if (countReject === promises.length) reject();
+          rejectCount += 1;
+          if (rejectCount === promises.length) reject();
         }
       )
     );
@@ -90,8 +90,15 @@ function getFirstResolvedPromiseResult(promises) {
  * [promise3, promise6, promise2] => Promise rejected with 2
  * [promise3, promise4, promise6] => Promise rejected with 6
  */
-function getFirstPromiseResult(/* promises */) {
-  throw new Error('Not implemented');
+function getFirstPromiseResult(promises) {
+  return new Promise((resolve, reject) => {
+    promises.map((s) =>
+      s.then(
+        (res) => resolve(res),
+        (err) => reject(err)
+      )
+    );
+  });
 }
 
 /**
@@ -105,8 +112,21 @@ function getFirstPromiseResult(/* promises */) {
  * [Promise.resolve(1), Promise.resolve(2), Promise.resolve(3)] => Promise fulfilled with [1, 2, 3]
  * [Promise.resolve(1), Promise.reject(2), Promise.resolve(3)] => Promise rejected with 2
  */
-function getAllOrNothing(/* promises */) {
-  throw new Error('Not implemented');
+function getAllOrNothing(promises) {
+  let resolveCount = 0;
+  const result = Array(promises.length).fill(0);
+  return new Promise((resolve, reject) => {
+    promises.map((s, i) =>
+      s.then(
+        (res) => {
+          result[i] = res;
+          resolveCount += 1;
+          if (resolveCount === promises.length) resolve(result);
+        },
+        (err) => reject(err)
+      )
+    );
+  });
 }
 
 /**
